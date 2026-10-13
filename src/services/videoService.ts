@@ -7,7 +7,6 @@
 import { Client } from '@gradio/client';
 
 const KEY_COLAB_URL = 'fabula.video.colabUrl';
-const KEY_VOICE = 'fabula.video.voice';
 const KEY_AVATARS = 'fabula.video.avatars';
 
 export interface AvatarImage {
@@ -17,26 +16,11 @@ export interface AvatarImage {
   builtIn?: boolean;
 }
 
-export const VOICES = [
-  { id: 'es-MX-DaliaNeural', label: 'Dalia (mujer, Mexico)' },
-  { id: 'es-MX-RenataNeural', label: 'Renata (mujer, Mexico)' },
-  { id: 'es-MX-NuriaNeural', label: 'Nuria (mujer, Mexico)' },
-  { id: 'es-MX-LarissaNeural', label: 'Larissa (mujer, Mexico)' },
-  { id: 'es-MX-CarlotaNeural', label: 'Carlota (mujer, Mexico)' },
-];
-
 export function getColabUrl(): string {
   return localStorage.getItem(KEY_COLAB_URL) || '';
 }
 export function setColabUrl(url: string) {
   localStorage.setItem(KEY_COLAB_URL, url.trim());
-}
-
-export function getVoice(): string {
-  return localStorage.getItem(KEY_VOICE) || VOICES[0].id;
-}
-export function setVoice(voice: string) {
-  localStorage.setItem(KEY_VOICE, voice);
 }
 
 /** Imagenes subidas por la usuaria (viven en localStorage). */
@@ -107,20 +91,6 @@ export function removeAvatar(id: string) {
   saveAvatars(getAvatars().filter((a) => a.id !== id));
 }
 
-/** Pide el audio al servidor (voces neuronales gratuitas). Devuelve un Blob MP3. */
-export async function generateAudio(text: string, voice: string): Promise<Blob> {
-  const res = await fetch('/api/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, voice }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Error ${res.status} al generar el audio.`);
-  }
-  return res.blob();
-}
-
 async function toBlob(src: string): Promise<Blob> {
   if (!src.startsWith('data:')) {
     const res = await fetch(src);
@@ -135,13 +105,20 @@ async function toBlob(src: string): Promise<Blob> {
   return new Blob([bytes], { type: mime });
 }
 
+export interface VideoRequest {
+  avatar: AvatarImage;
+  script: string; // guion completo; la voz se clona en Colab
+  title: string; // tarjeta de entrada
+  source: string; // roto inferior con la fuente
+}
+
 /**
- * Manda imagen + audio al notebook de Colab (Gradio) y devuelve la URL del MP4.
- * El notebook expone un endpoint /generar con inputs [imagen, audio].
+ * Manda imagen + guion + textos al notebook de Colab (Gradio) y devuelve la URL del MP4
+ * ya en 9:16 con voz clonada, tarjeta de titulo, subtitulos quemados y fuente.
+ * El notebook expone un endpoint /generar con inputs [imagen, guion, titulo, fuente].
  */
 export async function generateVideo(
-  avatar: AvatarImage,
-  audio: Blob,
+  { avatar, script, title, source }: VideoRequest,
   onStatus?: (msg: string) => void
 ): Promise<string> {
   const url = getColabUrl();
@@ -150,8 +127,8 @@ export async function generateVideo(
   onStatus?.('Conectando con Colab...');
   const client = await Client.connect(url);
 
-  onStatus?.('Generando video en la GPU gratuita (puede tardar varios minutos)...');
-  const job = client.submit('/generar', [await toBlob(avatar.dataUrl), audio]);
+  onStatus?.('Clonando voz y generando video en Colab (varios minutos)...');
+  const job = client.submit('/generar', [await toBlob(avatar.dataUrl), script, title, source]);
 
   for await (const msg of job) {
     if (msg.type === 'status') {

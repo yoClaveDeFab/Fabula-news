@@ -41,9 +41,9 @@ Fabula News es una aplicación web full-stack diseñada para redactar guiones no
    - **Paso 8**: Caption y hashtags.
 
 5. **Paso 3: Video gratuito (sin HeyGen)**:
-   - Voz neuronal en español de México gratis (voces de Microsoft Edge, endpoint `/api/tts`).
-   - Galería de imágenes del personaje guardada en el navegador.
-   - Botón *Generar video*: manda imagen + audio al notebook `colab/fabula_video.ipynb` (SadTalker en la GPU gratuita de Colab) y devuelve el MP4 listo para TikTok.
+   - Voz clonada de los videos originales de HeyGen (`colab/voz_referencia.wav`) con Chatterbox, open source.
+   - 20 imágenes del personaje precargadas en `public/avatars/`, más las que subas desde el navegador.
+   - Botón *Generar video*: manda imagen + guion + título + fuente al notebook `colab/fabula_video.ipynb` (GPU gratuita de Colab) y devuelve un MP4 1080x1920 con avatar animado (SadTalker), subtítulos por palabra (Whisper), tarjeta de título y rótulo de fuente.
    - Requiere tener el notebook corriendo y pegar su link `gradio.live` en *Configurar video*.
 
 6. **Historial & Configuración Personalizada**:

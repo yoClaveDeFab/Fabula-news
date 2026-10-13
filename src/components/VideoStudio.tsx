@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Clapperboard,
-  Mic,
   Settings2,
   Loader2,
   Download,
@@ -13,44 +12,34 @@ import {
 } from 'lucide-react';
 import {
   AvatarImage,
-  VOICES,
   addAvatarFromFile,
-  generateAudio,
   generateVideo,
   getAvatars,
   getBuiltInAvatars,
   getColabUrl,
-  getVoice,
   removeAvatar,
   setColabUrl,
-  setVoice,
 } from '../services/videoService.js';
 
 interface VideoStudioProps {
   script: string;
   cardId: string;
+  title: string;
+  sourceName: string;
 }
 
-type Phase = 'idle' | 'audio' | 'video' | 'done' | 'error';
+type Phase = 'idle' | 'video' | 'done' | 'error';
 
-export function VideoStudio({ script, cardId }: VideoStudioProps) {
+export function VideoStudio({ script, cardId, title, sourceName }: VideoStudioProps) {
   const [configOpen, setConfigOpen] = useState(false);
   const [colabUrl, setColabUrlState] = useState(getColabUrl());
-  const [voice, setVoiceState] = useState(getVoice());
   const [avatars, setAvatars] = useState<AvatarImage[]>(getAvatars());
   const [selectedAvatar, setSelectedAvatar] = useState<string>(getAvatars()[0]?.id || '');
   const [phase, setPhase] = useState<Phase>('idle');
   const [status, setStatus] = useState('');
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    return () => {
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
-    };
-  }, [audioUrl]);
 
   // Carga las imagenes precargadas del personaje y las pone antes de las subidas
   useEffect(() => {
@@ -61,13 +50,12 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
     });
   }, []);
 
-  const busy = phase === 'audio' || phase === 'video';
+  const busy = phase === 'video';
   const avatar = avatars.find((a) => a.id === selectedAvatar);
   const needsSetup = !colabUrl || !avatar;
 
   const handleSaveConfig = () => {
     setColabUrl(colabUrl);
-    setVoice(voice);
     setConfigOpen(false);
   };
 
@@ -94,33 +82,13 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
     if (selectedAvatar === id) setSelectedAvatar(next[0]?.id || '');
   };
 
-  const handlePreviewAudio = async () => {
-    setError('');
-    setPhase('audio');
-    setStatus('Generando voz...');
-    try {
-      const blob = await generateAudio(script, voice);
-      setAudioUrl(URL.createObjectURL(blob));
-      setPhase('idle');
-      setStatus('');
-    } catch (e) {
-      setPhase('error');
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
-
   const handleGenerateVideo = async () => {
     if (!avatar) return;
     setError('');
     setVideoUrl(null);
+    setPhase('video');
     try {
-      setPhase('audio');
-      setStatus('Generando voz...');
-      const blob = await generateAudio(script, voice);
-      setAudioUrl(URL.createObjectURL(blob));
-
-      setPhase('video');
-      const url = await generateVideo(avatar, blob, setStatus);
+      const url = await generateVideo({ avatar, script, title, source: sourceName }, setStatus);
       setVideoUrl(url);
       setPhase('done');
       setStatus('');
@@ -157,23 +125,8 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
               className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-neutral-200 font-mono"
             />
             <p className="text-neutral-500 mt-1">
-              Abre el notebook fabula_video.ipynb en Colab, corre todas las celdas y pega aqui el link gradio.live que imprime al final. Dura hasta 72 horas.
+              Abre colab/fabula_video.ipynb en Colab con GPU, corre todas las celdas y pega aqui el link gradio.live que imprime al final. Dura hasta 72 horas. La voz se clona en Colab a partir de voz_referencia.wav.
             </p>
-          </div>
-
-          <div>
-            <label className="font-semibold text-neutral-300 block mb-1">Voz</label>
-            <select
-              value={voice}
-              onChange={(e) => setVoiceState(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-neutral-200"
-            >
-              {VOICES.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div>
@@ -210,13 +163,13 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
                       <img src={a.dataUrl} alt={a.name} className="w-full h-full object-cover" />
                     </button>
                     {!a.builtIn && (
-                    <button
-                      onClick={() => handleRemove(a.id)}
-                      className="absolute -top-1 -right-1 bg-neutral-900 border border-neutral-700 rounded-full p-0.5 opacity-0 group-hover:opacity-100"
-                      title="Quitar"
-                    >
-                      <Trash2 className="w-3 h-3 text-red-400" />
-                    </button>
+                      <button
+                        onClick={() => handleRemove(a.id)}
+                        className="absolute -top-1 -right-1 bg-neutral-900 border border-neutral-700 rounded-full p-0.5 opacity-0 group-hover:opacity-100"
+                        title="Quitar"
+                      >
+                        <Trash2 className="w-3 h-3 text-red-400" />
+                      </button>
                     )}
                   </div>
                 ))}
@@ -234,7 +187,7 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
         </div>
       )}
 
-      {/* Avatar selector rapido */}
+      {/* Selector rapido de imagen */}
       {!configOpen && avatars.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {avatars.map((a) => (
@@ -252,26 +205,15 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-2">
-        <button
-          onClick={handlePreviewAudio}
-          disabled={busy}
-          className="py-2.5 px-4 rounded-xl text-xs font-semibold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 flex items-center justify-center gap-1.5 disabled:opacity-50"
-        >
-          {phase === 'audio' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mic className="w-3.5 h-3.5" />}
-          Escuchar voz
-        </button>
-
-        <button
-          onClick={handleGenerateVideo}
-          disabled={busy || needsSetup}
-          title={needsSetup ? 'Configura la URL de Colab y una imagen del personaje' : ''}
-          className="py-2.5 px-4 rounded-xl text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-950/40 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
-        >
-          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-          {busy ? status || 'Trabajando...' : 'Generar video'}
-        </button>
-      </div>
+      <button
+        onClick={handleGenerateVideo}
+        disabled={busy || needsSetup}
+        title={needsSetup ? 'Configura la URL de Colab y una imagen del personaje' : ''}
+        className="w-full py-3 px-4 rounded-xl text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-950/40 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+      >
+        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+        {busy ? status || 'Trabajando...' : 'Generar video (voz clonada + subtitulos, 9:16)'}
+      </button>
 
       {needsSetup && !configOpen && (
         <p className="text-[11px] text-neutral-500">
@@ -279,10 +221,6 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
           {!colabUrl && !avatar ? ' y ' : ''}
           {!avatar ? 'una imagen del personaje' : ''}. Entra a "Configurar video".
         </p>
-      )}
-
-      {audioUrl && (
-        <audio controls src={audioUrl} className="w-full h-9" />
       )}
 
       {error && (

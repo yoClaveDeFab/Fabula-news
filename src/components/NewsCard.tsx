@@ -202,7 +202,7 @@ export function NewsCard({
       </div>
 
       {/* Paso 3: Video gratuito (voz + avatar en Colab) */}
-      <VideoStudio script={card.script} cardId={card.id} />
+      <VideoStudio script={card.script} cardId={card.id} title={card.title} sourceName={card.sources[0]?.name || ''} />
 
       {/* Caption & Hashtags for TikTok */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
