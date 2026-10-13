@@ -15,6 +15,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { NewsScriptItem } from '../services/types.js';
+import { VideoStudio } from './VideoStudio.js';
 
 interface NewsCardProps {
   card: NewsScriptItem;
@@ -167,7 +168,7 @@ export function NewsCard({
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Guion final para HeyGen
+            Paso 1: Guion final
           </span>
           <span className="text-[11px] text-neutral-500 font-mono">
             {card.wordCount} palabras
@@ -199,6 +200,9 @@ export function NewsCard({
           )}
         </button>
       </div>
+
+      {/* Paso 3: Video gratuito (voz + avatar en Colab) */}
+      <VideoStudio script={card.script} cardId={card.id} />
 
       {/* Caption & Hashtags for TikTok */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">

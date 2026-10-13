@@ -4,6 +4,7 @@ import { parseRssConfig, testSingleFeed } from './rss.js';
 import { executeFullSearchWorkflow, rewriteNewsCard } from './newsWorkflow.js';
 import { AppConfig, NewsScriptItem } from '../services/types.js';
 import { startBackgroundSearchJob, getJob, getLatestJob, cancelJob } from './searchJobManager.js';
+import { synthesizeSpeech } from './tts.js';
 
 export const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -170,6 +171,25 @@ app.post('/api/search-news', async (req: Request, res: Response) => {
       message: err instanceof Error ? err.message : String(err),
     });
     res.end();
+  }
+});
+
+// 6. Free neural TTS (Microsoft Edge voices, sin API key ni costo)
+app.post('/api/tts', async (req: Request, res: Response) => {
+  try {
+    const { text, voice } = req.body as { text?: string; voice?: string };
+    if (!text || !text.trim()) {
+      res.status(400).json({ error: 'Falta el texto del guion.' });
+      return;
+    }
+    const selectedVoice = typeof voice === 'string' && voice.startsWith('es-') ? voice : 'es-MX-DaliaNeural';
+    const mp3 = await synthesizeSpeech(text.trim(), selectedVoice);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', String(mp3.length));
+    res.send(mp3);
+  } catch (err: unknown) {
+    console.error('Error en TTS:', err);
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });
 

@@ -40,7 +40,13 @@ Fabula News es una aplicación web full-stack diseñada para redactar guiones no
    - **Paso 7**: Evaluador de veracidad, coherencia, cohesión y adecuación.
    - **Paso 8**: Caption y hashtags.
 
-5. **Historial & Configuración Personalizada**:
+5. **Paso 3: Video gratuito (sin HeyGen)**:
+   - Voz neuronal en español de México gratis (voces de Microsoft Edge, endpoint `/api/tts`).
+   - Galería de imágenes del personaje guardada en el navegador.
+   - Botón *Generar video*: manda imagen + audio al notebook `colab/fabula_video.ipynb` (SadTalker en la GPU gratuita de Colab) y devuelve el MP4 listo para TikTok.
+   - Requiere tener el notebook corriendo y pegar su link `gradio.live` en *Configurar video*.
+
+6. **Historial & Configuración Personalizada**:
    - Marcado de notas usadas con guardado en Firestore.
    - Editor de temas prioritarios, lista de vigilancia de IA y feeds RSS.
 
