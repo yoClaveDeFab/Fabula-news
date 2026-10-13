@@ -18,6 +18,7 @@ import {
   generateAudio,
   generateVideo,
   getAvatars,
+  getBuiltInAvatars,
   getColabUrl,
   getVoice,
   removeAvatar,
@@ -51,6 +52,15 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
     };
   }, [audioUrl]);
 
+  // Carga las imagenes precargadas del personaje y las pone antes de las subidas
+  useEffect(() => {
+    getBuiltInAvatars().then((builtIn) => {
+      if (builtIn.length === 0) return;
+      setAvatars((prev) => [...builtIn, ...prev.filter((a) => !a.builtIn)]);
+      setSelectedAvatar((cur) => cur || builtIn[0].id);
+    });
+  }, []);
+
   const busy = phase === 'audio' || phase === 'video';
   const avatar = avatars.find((a) => a.id === selectedAvatar);
   const needsSetup = !colabUrl || !avatar;
@@ -77,6 +87,7 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
   };
 
   const handleRemove = (id: string) => {
+    if (id.startsWith('builtin-')) return;
     removeAvatar(id);
     const next = avatars.filter((a) => a.id !== id);
     setAvatars(next);
@@ -198,6 +209,7 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
                     >
                       <img src={a.dataUrl} alt={a.name} className="w-full h-full object-cover" />
                     </button>
+                    {!a.builtIn && (
                     <button
                       onClick={() => handleRemove(a.id)}
                       className="absolute -top-1 -right-1 bg-neutral-900 border border-neutral-700 rounded-full p-0.5 opacity-0 group-hover:opacity-100"
@@ -205,6 +217,7 @@ export function VideoStudio({ script, cardId }: VideoStudioProps) {
                     >
                       <Trash2 className="w-3 h-3 text-red-400" />
                     </button>
+                    )}
                   </div>
                 ))}
               </div>

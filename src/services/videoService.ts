@@ -13,7 +13,8 @@ const KEY_AVATARS = 'fabula.video.avatars';
 export interface AvatarImage {
   id: string;
   name: string;
-  dataUrl: string; // JPEG redimensionado, listo para mandarse
+  dataUrl: string; // data URL (subida por la usuaria) o ruta /avatars/... (precargada)
+  builtIn?: boolean;
 }
 
 export const VOICES = [
@@ -38,9 +39,22 @@ export function setVoice(voice: string) {
   localStorage.setItem(KEY_VOICE, voice);
 }
 
+/** Imagenes subidas por la usuaria (viven en localStorage). */
 export function getAvatars(): AvatarImage[] {
   try {
     return JSON.parse(localStorage.getItem(KEY_AVATARS) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+/** Imagenes precargadas del personaje en public/avatars (se sirven con la app). */
+export async function getBuiltInAvatars(): Promise<AvatarImage[]> {
+  try {
+    const res = await fetch('/avatars/manifest.json');
+    if (!res.ok) return [];
+    const names: string[] = await res.json();
+    return names.map((n) => ({ id: `builtin-${n}`, name: n, dataUrl: `/avatars/${n}`, builtIn: true }));
   } catch {
     return [];
   }
@@ -107,8 +121,13 @@ export async function generateAudio(text: string, voice: string): Promise<Blob> 
   return res.blob();
 }
 
-function dataUrlToBlob(dataUrl: string): Blob {
-  const [meta, b64] = dataUrl.split(',');
+async function toBlob(src: string): Promise<Blob> {
+  if (!src.startsWith('data:')) {
+    const res = await fetch(src);
+    if (!res.ok) throw new Error('No se pudo cargar la imagen del personaje.');
+    return res.blob();
+  }
+  const [meta, b64] = src.split(',');
   const mime = meta.match(/data:(.*?);/)?.[1] || 'image/jpeg';
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
@@ -132,7 +151,7 @@ export async function generateVideo(
   const client = await Client.connect(url);
 
   onStatus?.('Generando video en la GPU gratuita (puede tardar varios minutos)...');
-  const job = client.submit('/generar', [dataUrlToBlob(avatar.dataUrl), audio]);
+  const job = client.submit('/generar', [await toBlob(avatar.dataUrl), audio]);
 
   for await (const msg of job) {
     if (msg.type === 'status') {
