@@ -1,0 +1,8 @@
+{
+  "name": "Fabula News",
+  "description": "Generador de guiones de noticias de tecnología en español de México para TikTok y HeyGen.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

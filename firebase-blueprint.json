@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Config": {
+      "title": "Config",
+      "description": "App settings including style guide, examples, priority topics, avoid topics, AI watchlist, and RSS feeds.",
+      "type": "object",
+      "properties": {
+        "styleGuide": { "type": "string" },
+        "exampleScripts": { "type": "string" },
+        "priorityTopics": { "type": "string" },
+        "avoidTopics": { "type": "string" },
+        "aiWatchlist": { "type": "string" },
+        "rssFeeds": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "HistoryItem": {
+      "title": "HistoryItem",
+      "description": "Scripts marked as used by the user.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 500 },
+        "script": { "type": "string", "maxLength": 5000 },
+        "caption": { "type": "string", "maxLength": 500 },
+        "hashtags": { "type": "string", "maxLength": 500 },
+        "format": { "type": "string", "maxLength": 50 },
+        "wordCount": { "type": "number" },
+        "newsDate": { "type": "string", "maxLength": 100 },
+        "dateUsed": { "type": "string", "maxLength": 100 },
+        "userId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["title", "script", "userId"]
+    },
+    "ProcessedUrl": {
+      "title": "ProcessedUrl",
+      "description": "Normalized URLs already processed to prevent duplicate stories.",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string", "maxLength": 2048 },
+        "processedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["url"]
+    },
+    "ScriptOpening": {
+      "title": "ScriptOpening",
+      "description": "First 5 words of generated scripts to avoid repetitive openings.",
+      "type": "object",
+      "properties": {
+        "words": { "type": "string", "maxLength": 200 },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["words"]
+    }
+  },
+  "firestore": {
+    "/config/{configId}": {
+      "schema": "Config",
+      "description": "Application configuration settings."
+    },
+    "/history/{historyId}": {
+      "schema": "HistoryItem",
+      "description": "Archive of scripts used by the user."
+    },
+    "/processed_urls/{urlId}": {
+      "schema": "ProcessedUrl",
+      "description": "Index of already processed news URLs."
+    },
+    "/script_openings/{openingId}": {
+      "schema": "ScriptOpening",
+      "description": "First words of recent scripts."
+    }
+  }
+}

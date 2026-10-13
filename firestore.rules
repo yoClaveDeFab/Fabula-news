@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Config collection
+    match /config/{configId} {
+      allow read: if isVerifiedUser();
+      allow write: if isVerifiedUser() && isValidId(configId);
+    }
+
+    // History collection
+    match /history/{historyId} {
+      allow list: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow get: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedUser() 
+        && isValidId(historyId)
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.title is string && request.resource.data.title.size() <= 500
+        && request.resource.data.script is string && request.resource.data.script.size() <= 5000;
+      allow update: if isVerifiedUser()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.title is string && request.resource.data.title.size() <= 500
+        && request.resource.data.script is string && request.resource.data.script.size() <= 5000;
+      allow delete: if isVerifiedUser() && resource.data.userId == request.auth.uid;
+    }
+
+    // Processed URLs collection to deduplicate news
+    match /processed_urls/{urlId} {
+      allow read: if isVerifiedUser();
+      allow write: if isVerifiedUser() 
+        && request.resource.data.url is string 
+        && request.resource.data.url.size() <= 2048;
+    }
+
+    // Script openings collection
+    match /script_openings/{openingId} {
+      allow read: if isVerifiedUser();
+      allow write: if isVerifiedUser() 
+        && request.resource.data.words is string 
+        && request.resource.data.words.size() <= 200;
+    }
+
+    // Background search jobs
+    match /search_jobs/{jobId} {
+      allow read, write: if isVerifiedUser();
+    }
+
+    // Gemini technical execution logs
+    match /gemini_logs/{logId} {
+      allow read, write: if isVerifiedUser();
+    }
+  }
+}
