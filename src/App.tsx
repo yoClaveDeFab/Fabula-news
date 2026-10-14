@@ -15,6 +15,7 @@ import { ProgressIndicator } from './components/ProgressIndicator.js';
 import { NewsCard } from './components/NewsCard.js';
 import { HistoryTab } from './components/HistoryTab.js';
 import { ConfigTab } from './components/ConfigTab.js';
+import { VideoTab } from './components/VideoTab.js';
 import { LoginScreen } from './components/LoginScreen.js';
 import { Sparkles, AlertCircle } from 'lucide-react';
 
@@ -25,7 +26,7 @@ export default function App() {
   const [isUnauthorized, setIsUnauthorized] = useState(false);
 
   // App tabs & config
-  const [activeTab, setActiveTab] = useState<'news' | 'history' | 'config'>('news');
+  const [activeTab, setActiveTab] = useState<'news' | 'video' | 'history' | 'config'>('news');
   const [config, setConfig] = useState<AppConfig | null>(null);
 
   // News search state
@@ -612,6 +613,8 @@ export default function App() {
         )}
 
         {/* PESTAÑA HISTORIAL */}
+        {activeTab === 'video' && <VideoTab />}
+
         {activeTab === 'history' && <HistoryTab />}
 
         {/* PESTAÑA CONFIGURACIÓN */}

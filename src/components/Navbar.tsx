@@ -1,9 +1,9 @@
-import { Newspaper, History, Settings, LogOut } from 'lucide-react';
+import { Newspaper, History, Settings, LogOut, Clapperboard } from 'lucide-react';
 import { User } from 'firebase/auth';
 
 interface NavbarProps {
-  activeTab: 'news' | 'history' | 'config';
-  setActiveTab: (tab: 'news' | 'history' | 'config') => void;
+  activeTab: 'news' | 'video' | 'history' | 'config';
+  setActiveTab: (tab: 'news' | 'video' | 'history' | 'config') => void;
   user: User | null;
   onLogout: () => void;
   newsCount?: number;
@@ -90,6 +90,18 @@ export function Navbar({
                 {newsCount}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('video')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
+              activeTab === 'video'
+                ? 'bg-neutral-800 text-sky-400 shadow-sm border border-neutral-700'
+                : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
+            }`}
+          >
+            <Clapperboard className="w-4 h-4" />
+            <span>Video</span>
           </button>
 
           <button
