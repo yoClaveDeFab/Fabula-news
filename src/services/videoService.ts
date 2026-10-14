@@ -1,12 +1,9 @@
 /**
  * Servicio del Paso 3 (video gratuito).
- * La configuracion vive en localStorage: solo Betsy usa la app desde su navegador
- * y asi no tocamos Firestore ni el documento de configuracion general.
+ * Las fotos subidas y el trabajo pendiente viven en localStorage del navegador.
+ * El video se genera en Kaggle (GPU gratuita) a traves del servidor.
  */
 
-import { Client } from '@gradio/client';
-
-const KEY_COLAB_URL = 'fabula.video.colabUrl';
 const KEY_AVATARS = 'fabula.video.avatars';
 
 export interface AvatarImage {
@@ -14,13 +11,6 @@ export interface AvatarImage {
   name: string;
   dataUrl: string; // data URL (subida por la usuaria) o ruta /avatars/... (precargada)
   builtIn?: boolean;
-}
-
-export function getColabUrl(): string {
-  return localStorage.getItem(KEY_COLAB_URL) || '';
-}
-export function setColabUrl(url: string) {
-  localStorage.setItem(KEY_COLAB_URL, url.trim());
 }
 
 /** Imagenes subidas por la usuaria (viven en localStorage). */
@@ -107,49 +97,10 @@ async function toBlob(src: string): Promise<Blob> {
 
 export interface VideoRequest {
   avatar: AvatarImage;
-  script: string; // guion completo; la voz se clona en Colab
+  script: string; // guion completo; la voz se clona en Kaggle
   title: string; // tarjeta de entrada
   source: string; // roto inferior con la fuente
 }
-
-/**
- * Manda imagen + guion + textos al notebook de Colab (Gradio) y devuelve la URL del MP4
- * ya en 9:16 con voz clonada, tarjeta de titulo, subtitulos quemados y fuente.
- * El notebook expone un endpoint /generar con inputs [imagen, guion, titulo, fuente].
- */
-export async function generateVideo(
-  { avatar, script, title, source }: VideoRequest,
-  onStatus?: (msg: string) => void
-): Promise<string> {
-  const url = getColabUrl();
-  if (!url) throw new Error('Pega primero la URL de Colab en "Configurar video".');
-
-  onStatus?.('Conectando con Colab...');
-  const client = await Client.connect(url);
-
-  onStatus?.('Clonando voz y generando video en Colab (varios minutos)...');
-  const job = client.submit('/generar', [await toBlob(avatar.dataUrl), script, title, source]);
-
-  for await (const msg of job) {
-    if (msg.type === 'status') {
-      if (msg.stage === 'error') {
-        const detail = typeof msg.message === 'string' ? msg.message : 'Colab devolvio un error.';
-        throw new Error(detail);
-      }
-      if (msg.queue && typeof msg.position === 'number' && msg.position > 0) {
-        onStatus?.(`En fila (posicion ${msg.position})...`);
-      }
-    }
-    if (msg.type === 'data') {
-      const out = (msg.data as any)?.[0];
-      const videoUrl: string | undefined = out?.video?.url || out?.url;
-      if (!videoUrl) throw new Error('Colab no devolvio un archivo de video.');
-      return videoUrl;
-    }
-  }
-  throw new Error('La generacion termino sin resultado.');
-}
-
 
 // ---------- Kaggle (GPU gratuita, en segundo plano) ----------
 

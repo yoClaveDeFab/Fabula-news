@@ -13,15 +13,16 @@ import {
   ShieldCheck,
   Hash,
   MessageSquare,
+  Clapperboard,
 } from 'lucide-react';
 import { NewsScriptItem } from '../services/types.js';
-import { VideoStudio } from './VideoStudio.js';
 
 interface NewsCardProps {
   card: NewsScriptItem;
   cardNumber: number;
   onRewrite: (card: NewsScriptItem) => Promise<void>;
   onMarkUsed: (card: NewsScriptItem) => Promise<void>;
+  onMakeVideo?: (card: NewsScriptItem) => void;
   isRewriting?: boolean;
 }
 
@@ -30,6 +31,7 @@ export function NewsCard({
   cardNumber,
   onRewrite,
   onMarkUsed,
+  onMakeVideo,
   isRewriting = false,
 }: NewsCardProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -168,7 +170,7 @@ export function NewsCard({
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Paso 1: Guion final
+            Guion final
           </span>
           <span className="text-[11px] text-neutral-500 font-mono">
             {card.wordCount} palabras
@@ -201,8 +203,15 @@ export function NewsCard({
         </button>
       </div>
 
-      {/* Paso 3: Video gratuito (voz + avatar en Colab) */}
-      <VideoStudio script={card.script} cardId={card.id} title={card.title} sourceName={card.sources[0]?.name || ''} />
+      {onMakeVideo && (
+        <button
+          onClick={() => onMakeVideo(card)}
+          className="w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-950/40 active:scale-[0.99] transition"
+        >
+          <Clapperboard className="w-4 h-4" />
+          <span>Hacer video con este guion</span>
+        </button>
+      )}
 
       {/* Caption & Hashtags for TikTok */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">

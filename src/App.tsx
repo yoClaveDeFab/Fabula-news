@@ -27,6 +27,13 @@ export default function App() {
 
   // App tabs & config
   const [activeTab, setActiveTab] = useState<'news' | 'video' | 'history' | 'config'>('news');
+  const [videoDraft, setVideoDraft] = useState<{ script: string; title: string } | null>(null);
+
+  const handleMakeVideo = (card: NewsScriptItem) => {
+    setVideoDraft({ script: card.script, title: card.title });
+    setActiveTab('video');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const [config, setConfig] = useState<AppConfig | null>(null);
 
   // News search state
@@ -576,7 +583,7 @@ export default function App() {
                     3 Guiones generados
                   </h2>
                   <span className="text-xs text-neutral-400">
-                    Pégalos en HeyGen para generar tu avatar
+                    Elige uno y hazlo video en un toque
                   </span>
                 </div>
 
@@ -588,6 +595,7 @@ export default function App() {
                       card={card}
                       onRewrite={handleRewriteCard}
                       onMarkUsed={handleMarkUsed}
+                      onMakeVideo={handleMakeVideo}
                       isRewriting={rewritingId === card.id}
                     />
                   ))}
@@ -613,7 +621,7 @@ export default function App() {
         )}
 
         {/* PESTAÑA HISTORIAL */}
-        {activeTab === 'video' && <VideoTab />}
+        {activeTab === 'video' && <VideoTab initialScript={videoDraft?.script} initialTitle={videoDraft?.title} />}
 
         {activeTab === 'history' && <HistoryTab />}
 
