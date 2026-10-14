@@ -19,6 +19,11 @@ import {
   getColabUrl,
   removeAvatar,
   setColabUrl,
+  isKaggleAvailable,
+  startKaggleVideo,
+  pollKaggle,
+  getPendingKaggleJob,
+  clearPendingKaggleJob,
 } from '../services/videoService.js';
 
 /**
@@ -35,7 +40,62 @@ export function VideoTab() {
   const [status, setStatus] = useState('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [log, setLog] = useState('');
+  const [kaggle, setKaggle] = useState<boolean | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const pollTimer = useRef<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Detecta si Kaggle esta configurado en el servidor y si hay un trabajo pendiente
+  useEffect(() => {
+    isKaggleAvailable().then((ok) => {
+      setKaggle(ok);
+      if (ok && getPendingKaggleJob()) {
+        setBusy(true);
+        setStatus('Retomando trabajo pendiente en Kaggle...');
+        startPolling();
+      }
+    });
+    return () => {
+      if (pollTimer.current) window.clearInterval(pollTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const startPolling = () => {
+    if (pollTimer.current) window.clearInterval(pollTimer.current);
+    const started = getPendingKaggleJob()?.startedAt;
+    const tick = async () => {
+      if (started) setElapsed(Math.round((Date.now() - new Date(started).getTime()) / 60000));
+      try {
+        const p = await pollKaggle();
+        if (p.status === 'complete' && p.videoUrl) {
+          if (pollTimer.current) window.clearInterval(pollTimer.current);
+          pollTimer.current = null;
+          clearPendingKaggleJob();
+          setVideoUrl(p.videoUrl);
+          setBusy(false);
+          setStatus('');
+        } else if (p.status === 'error' || p.status === 'cancelled') {
+          if (pollTimer.current) window.clearInterval(pollTimer.current);
+          pollTimer.current = null;
+          clearPendingKaggleJob();
+          setBusy(false);
+          setStatus('');
+          setError(p.message || 'Kaggle terminó con error.');
+          setLog(p.log || '');
+        } else if (p.status === 'queued') {
+          setStatus('En fila en Kaggle (esperando GPU)...');
+        } else {
+          setStatus('Generando en Kaggle...');
+        }
+      } catch (e) {
+        setStatus('Sin respuesta de Kaggle, reintentando...');
+      }
+    };
+    tick();
+    pollTimer.current = window.setInterval(tick, 30000);
+  };
 
   useEffect(() => {
     getBuiltInAvatars().then((builtIn) => {
@@ -47,7 +107,7 @@ export function VideoTab() {
 
   const avatar = avatars.find((a) => a.id === selectedAvatar);
   const wordCount = script.trim() ? script.trim().split(/\s+/).length : 0;
-  const canGenerate = !!colabUrl && !!avatar && wordCount >= 10 && !busy;
+  const canGenerate = (kaggle || !!colabUrl) && !!avatar && wordCount >= 10 && !busy;
 
   const handleSaveUrl = () => {
     setColabUrl(colabUrl);
@@ -89,10 +149,24 @@ export function VideoTab() {
   const handleGenerate = async () => {
     if (!avatar) return;
     setError('');
+    setLog('');
     setVideoUrl(null);
     setBusy(true);
+    const req = { avatar, script: script.trim(), title: autoTitle, source: '' };
+    if (kaggle) {
+      try {
+        setStatus('Enviando a Kaggle...');
+        await startKaggleVideo(req);
+        setStatus('En fila en Kaggle (esperando GPU)...');
+        startPolling();
+      } catch (e) {
+        setBusy(false);
+        setError(e instanceof Error ? e.message : String(e));
+      }
+      return;
+    }
     try {
-      const url = await generateVideo({ avatar, script: script.trim(), title: autoTitle, source: '' }, setStatus);
+      const url = await generateVideo(req, setStatus);
       setVideoUrl(url);
       setStatus('');
     } catch (e) {
@@ -172,7 +246,16 @@ export function VideoTab() {
         </p>
       </section>
 
-      {/* 3. Colab */}
+      {/* 3. Motor */}
+      {kaggle && (
+        <section className="bg-neutral-900 border border-neutral-800 rounded-3xl p-5">
+          <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">3. Motor</span>
+          <p className="text-sm text-neutral-300 mt-1">
+            Kaggle (GPU gratuita, automático). El video tarda entre 10 y 15 minutos; puedes cerrar la app y volver, el resultado te espera aqui.
+          </p>
+        </section>
+      )}
+      {kaggle === false && (
       <section className="bg-neutral-900 border border-neutral-800 rounded-3xl p-5 space-y-2">
         <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">3. Link de Colab</span>
         <div className="flex gap-2">
@@ -197,6 +280,7 @@ export function VideoTab() {
           Se guarda en este navegador. Cambia cada vez que reinicias el notebook de Colab.
         </p>
       </section>
+      )}
 
       {/* 4. Generar */}
       <button
@@ -205,20 +289,23 @@ export function VideoTab() {
         className="w-full py-4 rounded-2xl text-base font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-950/40 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
       >
         {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-        {busy ? status || 'Trabajando...' : 'Generar video'}
+        {busy ? `${status || 'Trabajando...'}${kaggle && elapsed > 0 ? ` (${elapsed} min)` : ''}` : 'Generar video'}
       </button>
       {!canGenerate && !busy && (
         <p className="text-[11px] text-neutral-500 text-center">
           {wordCount < 10 ? 'Pega un guion de al menos 10 palabras. ' : ''}
           {!avatar ? 'Elige una imagen. ' : ''}
-          {!colabUrl ? 'Pega y guarda el link de Colab.' : ''}
+          {!kaggle && !colabUrl ? 'Pega y guarda el link de Colab.' : ''}
         </p>
       )}
 
       {error && (
         <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/50 text-red-200 text-xs flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-          <span>{error}</span>
+          <div className="space-y-1">
+            <span>{error}</span>
+            {log && <pre className="text-[10px] text-red-300/80 whitespace-pre-wrap max-h-40 overflow-auto">{log}</pre>}
+          </div>
         </div>
       )}
 

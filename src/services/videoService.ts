@@ -149,3 +149,73 @@ export async function generateVideo(
   }
   throw new Error('La generacion termino sin resultado.');
 }
+
+
+// ---------- Kaggle (GPU gratuita, en segundo plano) ----------
+
+export async function isKaggleAvailable(): Promise<boolean> {
+  try {
+    const r = await fetch('/api/kaggle/config');
+    const d = await r.json();
+    return !!d.configured;
+  } catch {
+    return false;
+  }
+}
+
+async function blobToBase64(b: Blob): Promise<string> {
+  const buf = new Uint8Array(await b.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+const KEY_KAGGLE_JOB = 'fabula.video.kaggleJob';
+
+export interface KaggleJobRecord {
+  startedAt: string;
+  title: string;
+}
+
+export function getPendingKaggleJob(): KaggleJobRecord | null {
+  try {
+    return JSON.parse(localStorage.getItem(KEY_KAGGLE_JOB) || 'null');
+  } catch {
+    return null;
+  }
+}
+export function clearPendingKaggleJob() {
+  localStorage.removeItem(KEY_KAGGLE_JOB);
+}
+
+/** Envía el trabajo a Kaggle. Devuelve de inmediato; el video se consulta con pollKaggle. */
+export async function startKaggleVideo({ avatar, script, title, source }: VideoRequest): Promise<KaggleJobRecord> {
+  const imageBase64 = await blobToBase64(await toBlob(avatar.dataUrl));
+  const res = await fetch('/api/kaggle/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ script, title, source, imageBase64 }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error ${res.status} al enviar a Kaggle.`);
+  const rec: KaggleJobRecord = { startedAt: data.startedAt || new Date().toISOString(), title };
+  localStorage.setItem(KEY_KAGGLE_JOB, JSON.stringify(rec));
+  return rec;
+}
+
+export interface KaggleProgress {
+  status: 'queued' | 'running' | 'complete' | 'error' | 'cancelled' | 'unknown';
+  message?: string;
+  log?: string;
+  videoUrl?: string; // URL local del servidor que entrega el MP4
+}
+
+export async function pollKaggle(): Promise<KaggleProgress> {
+  const res = await fetch('/api/kaggle/jobs/status');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error ${res.status} al consultar Kaggle.`);
+  if (data.status === 'complete' && data.videoUrl) {
+    return { ...data, videoUrl: `/api/kaggle/jobs/video?t=${Date.now()}` };
+  }
+  return data;
+}

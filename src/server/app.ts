@@ -4,9 +4,10 @@ import { parseRssConfig, testSingleFeed } from './rss.js';
 import { executeFullSearchWorkflow, rewriteNewsCard } from './newsWorkflow.js';
 import { AppConfig, NewsScriptItem } from '../services/types.js';
 import { startBackgroundSearchJob, getJob, getLatestJob, cancelJob } from './searchJobManager.js';
+import { isKaggleConfigured, pushKaggleJob, getKaggleStatus, getKaggleOutput } from './kaggle.js';
 
 export const app = express();
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '25mb' }));
 
 const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL || 'bfabiola.castillo@gmail.com';
 
@@ -170,6 +171,70 @@ app.post('/api/search-news', async (req: Request, res: Response) => {
       message: err instanceof Error ? err.message : String(err),
     });
     res.end();
+  }
+});
+
+// 7. Video en Kaggle (GPU gratuita, en segundo plano)
+app.get('/api/kaggle/config', (_req: Request, res: Response) => {
+  res.json({ configured: isKaggleConfigured() });
+});
+
+app.post('/api/kaggle/jobs', async (req: Request, res: Response) => {
+  try {
+    const { script, title, source, imageBase64 } = req.body as {
+      script?: string; title?: string; source?: string; imageBase64?: string;
+    };
+    if (!script || !script.trim() || !imageBase64) {
+      res.status(400).json({ error: 'Faltan el guion o la imagen.' });
+      return;
+    }
+    const job = await pushKaggleJob({ script, title: title || 'Fabula News', source: source || '', imageBase64 });
+    res.status(202).json({ ...job, startedAt: new Date().toISOString() });
+  } catch (err: unknown) {
+    console.error('Error al enviar a Kaggle:', err);
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+app.get('/api/kaggle/jobs/status', async (_req: Request, res: Response) => {
+  try {
+    const st = await getKaggleStatus();
+    if (st.status === 'complete') {
+      const out = await getKaggleOutput();
+      res.json({ ...st, videoUrl: out.videoUrl, log: out.log });
+      return;
+    }
+    if (st.status === 'error') {
+      const out = await getKaggleOutput().catch(() => ({ log: '' }));
+      res.json({ ...st, log: out.log });
+      return;
+    }
+    res.json(st);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+// Descarga el MP4 a través del servidor (evita problemas de CORS en el navegador)
+app.get('/api/kaggle/jobs/video', async (_req: Request, res: Response) => {
+  try {
+    const out = await getKaggleOutput();
+    if (!out.videoUrl) {
+      res.status(404).json({ error: 'Todavía no hay video.' });
+      return;
+    }
+    const upstream = await fetch(out.videoUrl);
+    if (!upstream.ok || !upstream.body) {
+      res.status(502).json({ error: `No se pudo descargar el video (${upstream.status}).` });
+      return;
+    }
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Content-Disposition', 'inline; filename="fabula-news.mp4"');
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.setHeader('Content-Length', String(buf.length));
+    res.send(buf);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });
 

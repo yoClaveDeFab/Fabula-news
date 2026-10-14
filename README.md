@@ -44,7 +44,9 @@ Fabula News es una aplicación web full-stack diseñada para redactar guiones no
    - Voz clonada de los videos originales de HeyGen (`colab/voz_referencia.wav`) con Chatterbox, open source.
    - 20 imágenes del personaje precargadas en `public/avatars/`, más las que subas desde el navegador.
    - Botón *Generar video*: manda imagen + guion + título + fuente al notebook `colab/fabula_video.ipynb` (GPU gratuita de Colab) y devuelve un MP4 1080x1920 con avatar animado (SadTalker), subtítulos por palabra (Whisper), tarjeta de título y rótulo de fuente.
-   - Requiere tener el notebook corriendo y pegar su link `gradio.live` en *Configurar video*.
+   - Pestaña **Video**: pegas el guion, eliges o subes foto y generas.
+   - Motor recomendado: **Kaggle** (automático, sin abrir nada): con `KAGGLE_USERNAME` y `KAGGLE_KEY` en Secrets, la app envía el trabajo `src/server/kaggleJob.py` a la GPU gratuita de Kaggle y recoge el MP4 (10 a 15 min).
+   - Motor alterno: Colab, pegando el link `gradio.live` del notebook.
 
 6. **Historial & Configuración Personalizada**:
    - Marcado de notas usadas con guardado en Firestore.
