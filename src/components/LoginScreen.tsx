@@ -36,7 +36,7 @@ export function LoginScreen({ allowedEmail, userEmail, isUnauthorized }: LoginSc
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight">Fabula News</h1>
           <p className="text-xs text-neutral-400 mt-1.5 leading-relaxed">
-            Generador editorial de guiones tech para TikTok y HeyGen.
+            Noticias de tecnología verificadas, convertidas en guion y video para TikTok.
           </p>
         </div>
 

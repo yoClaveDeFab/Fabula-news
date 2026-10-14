@@ -508,7 +508,7 @@ export default function App() {
               <div className="max-w-2xl space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>3 guiones listos para copiar y pegar en HeyGen</span>
+                  <span>3 guiones listos para convertir en video</span>
                 </div>
 
                 <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">

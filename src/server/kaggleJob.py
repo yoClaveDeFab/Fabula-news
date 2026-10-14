@@ -8,7 +8,7 @@ GUION = __GUION__
 TITULO = __TITULO__
 FUENTE = __FUENTE__
 IMAGEN_B64 = __IMAGEN_B64__
-VOZ_URL = 'https://raw.githubusercontent.com/yoClaveDeFab/Fabula-news/main/colab/voz_referencia.wav'
+VOZ_URL = 'https://raw.githubusercontent.com/yoClaveDeFab/Fabula-news/main/assets/voz_referencia.wav'
 
 W = '/kaggle/working'
 os.makedirs(W, exist_ok=True)

@@ -670,7 +670,7 @@ export async function step5WriteScript(
   const minWords = format === 'Rápido' ? 95 : 140;
   const maxWords = format === 'Rápido' ? 115 : 180;
 
-  const prompt = `${preamble}Eres la guionista de Fabula News. Escribe un guion para TikTok que será leído en voz alta por un avatar de HeyGen.
+  const prompt = `${preamble}Eres la guionista de Fabula News. Escribe un guion para TikTok que será leído en voz alta por la presentadora virtual de Fabula News.
 
 TONO Y FILOSOFÍA EDITORIAL: CERO POLÉMICA
 - La narradora NO ES POLÉMICA: no busca peleas, no polariza y no da "hot takes" agresivos ni sensacionalistas.
@@ -684,8 +684,8 @@ ESTRUCTURA OBLIGATORIA DEL GUION (5 MOMENTOS CLAVE):
 4. EL PUENTE A MÉXICO Y LATAM: Conecta de forma muy natural el hecho con repercusiones prácticas (ej. "¿Y México qué tiene que ver? / ¿Y esto nos afecta en México? Podría hacerlo. Industrias como la automotriz, electrónica y manufacturera dependen de...").
 5. CIERRE SERENO Y REFLEXIVO: Concluye con una reflexión abierta, calmada o con invitación a pensar (ej. "Todavía no estamos ahí, pero definitivamente es algo que vale la pena seguir. ¿Tú qué opinas?" o "Pero la carrera por fabricar chips cada vez se está poniendo más interesante.").
 
-FORMATO Y PÁRRAFOS PARA AVATAR (HEYGEN):
-- Escribe el guion en PÁRRAFOS CORTOS de 1 a 2 oraciones cada uno, separados por un salto de línea. Esto crea las pausas de respiración y dicción perfectas para el avatar de HeyGen.
+FORMATO Y PÁRRAFOS PARA LA PRESENTADORA:
+- Escribe el guion en PÁRRAFOS CORTOS de 1 a 2 oraciones cada uno, separados por un salto de línea. Esto crea las pausas de respiración y dicción perfectas para la voz sintetizada.
 
 EJEMPLOS REALES DE REFERENCIA:
 ${exampleScripts}
@@ -769,7 +769,7 @@ Compara el siguiente borrador de guion contra la Guía de Estilo y la Ficha de H
 
 FILOSOFÍA OBLIGATORIA: CERO POLÉMICA
 - Si el guion suena agresivo, polarizante, melodramático o con juicios categóricos, suavízalo y conviértelo a un tono analítico, ecuánime, sereno y explicativo.
-- Asegura que tenga párrafos cortos de 1 a 2 oraciones para la lectura del avatar en HeyGen.
+- Asegura que tenga párrafos cortos de 1 a 2 oraciones para la lectura de la presentadora.
 
 GUÍA DE ESTILO:
 ${styleGuide}

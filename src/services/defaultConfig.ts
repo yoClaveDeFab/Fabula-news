@@ -1,6 +1,6 @@
 export const DEFAULT_STYLE_GUIDE = `GUÍA DE ESTILO PARA GUIONES DE FABULA NEWS
 
-El guion se va a DECIR en voz alta por un avatar de HeyGen. Escribe como habla una mexicana analítica, culta y serena explicándole una noticia de tecnología a su audiencia, sin caer jamás en sensacionalismo ni posturas polémicas.
+El guion se va a DECIR en voz alta por la presentadora virtual de Fabula News. Escribe como habla una mexicana analítica, culta y serena explicándole una noticia de tecnología a su audiencia, sin caer jamás en sensacionalismo ni posturas polémicas.
 
 FILOSOFÍA EDITORIAL: CERO POLÉMICA
 - La narradora NO busca controversias forzadas ni polarizar a la gente.
@@ -15,8 +15,8 @@ ESTRUCTURA DE LOS GUIONES (5 PASOS ORGÁNICOS)
 4. EL PUENTE A MÉXICO Y LATAM: Aterriza las repercusiones prácticas con un puente natural ("¿Y México qué tiene que ver? / ¿Y esto nos afecta en México? Podría hacerlo. Muchos sectores que producen aquí dependen de chips importados, así que cualquier cambio...").
 5. CIERRE SERENO Y REFLEXIVO: Concluye con una reflexión abierta, calmada o con invitación a pensar ("Todavía no estamos ahí, pero definitivamente es algo que vale la pena seguir. ¿Tú qué opinas?" o "Todavía falta ver hasta dónde llega... Pero la carrera cada vez se está poniendo más interesante.").
 
-FORMATO Y RITMO PARA AVATAR (HEYGEN)
-- Escribe en PÁRRAFOS CORTOS de 1 a 2 oraciones cada uno, separados por un salto de línea. Esto genera las pausas de respiración y lectura ideales para el avatar de HeyGen.
+FORMATO Y RITMO PARA LA PRESENTADORA
+- Escribe en PÁRRAFOS CORTOS de 1 a 2 oraciones cada uno, separados por un salto de línea. Esto genera las pausas de respiración y lectura ideales para la voz sintetizada.
 - Extensión:
   * Formato Rápido: entre 95 y 115 palabras (lanzamientos breves, alertas o filtraciones).
   * Formato Explicado: entre 140 y 180 palabras (noticias de impacto, geopolítica, chips, leyes de IA o notas con contexto).

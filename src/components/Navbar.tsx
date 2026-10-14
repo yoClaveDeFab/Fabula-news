@@ -31,7 +31,7 @@ export function Navbar({
               <div className="flex items-center gap-2">
                 <span className="font-bold text-lg tracking-tight text-white">Fabula News</span>
                 <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                  TikTok & HeyGen
+                  TikTok
                 </span>
               </div>
               <p className="text-[11px] text-neutral-400 hidden sm:block truncate max-w-xs">
